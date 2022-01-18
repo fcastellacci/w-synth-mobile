@@ -12,6 +12,7 @@ const filterR = document.querySelector("#filter-res");
 //Presets
 const savePresetBtn = document.querySelector("#save-preset");
 const uploadPresetFile = document.querySelector("#preset-file");
+const randomizePresetBtn = document.querySelector("#randomize-preset-btn")
 //LFO
 const lfoMod = document.querySelectorAll('[name="lfo-mod"]');
 const lfoWave = document.querySelector("#lfo-wave");
@@ -30,6 +31,40 @@ const synth = {
     lfoGainNode: null,
 };
 
+const oscWaveTypes = ["sine", "triangle", "square", "sawtooth"];
+const filterTypes = ["lowpass", "bandpass", "highpass"];
+
+
+function createRandomParams() {
+    return {
+        gains: audioParams.gains.map(_ => getRandomInRange(0.1, 0.5)),
+        ADSR: {
+            active: false,
+            attack: 0,
+            decay: 0,
+            sustain: 0,
+            release: 0,
+        },
+        oscFreqs: audioParams.oscFreqs.map(_ => getRandomInRange(40, 600)),
+        oscWaves: audioParams.oscWaves.map(_ => getRandomElement(oscWaveTypes)),
+        filter: {
+            type: getRandomElement(filterTypes),
+            cutoff: getRandomInRange(100, 5000),
+            resonance: getRandomInRange(1, 20),
+        },
+        lfo: {
+            mod: [Math.random() < 0.5 ? "filter" : null, 
+                  Math.random() < 0.5 ? "osc1" : null, 
+                  Math.random() < 0.5 ? "osc2" : null],
+            wave: getRandomElement(oscWaveTypes),
+            rate: getRandomInRange(0.1, 30),
+            amount: getRandomInRange(1, 800),
+        },
+        oscDetune: getRandomInRange(-100, 100),
+        oscTranspose: [0, 0],
+    };
+}
+
 let audioParams = {
     gains: [0, 0, 0, 0],
     ADSR: {
@@ -47,7 +82,7 @@ let audioParams = {
         resonance: 0,
     },
     lfo: {
-        mod: [null, null, null],
+        mod: [false, false, false],
         wave: "sine",
         rate: 0,
         amount: 0,
@@ -55,6 +90,25 @@ let audioParams = {
     oscDetune: 0,
     oscTranspose: [0, 0],
 };
+
+function getRandomInRange(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
+function getRandomElement(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomizeParams() {
+    let randParams = createRandomParams()
+
+    document.querySelector("#preset").innerHTML = randParams;
+
+    audioParams = randParams;
+
+    setParams();
+    updateParams();
+}
 
 /*
  * Create audio context and update audio params
@@ -248,17 +302,18 @@ function updateParams() {
 
     //Connect LFO when loading user preset
     if (synth.audioCtx) {
+        synth.lfoGainNode.disconnect() //first we need to reset the lfo destinations from previous 
         if (audioParams.lfo.mod[0]) {
             synth.lfoGainNode.connect(synth.filter.frequency);
         }
 
         if (audioParams.lfo.mod[1]) {
             synth.lfoGainNode.connect(synth.oscillators[0].frequency);
-        }
+        } 
 
         if (audioParams.lfo.mod[2]) {
             synth.lfoGainNode.connect(synth.oscillators[1].frequency);
-        }
+        } 
     }
 
     audioParams.lfo.wave = LFOWave;
@@ -347,11 +402,11 @@ function setParams() {
     if (audioParams.ADSR.active === true) {
         EG.classList.remove("disabled");
         activateEG.classList.add("on");
-        activateEG.innerText = "Desactivar Envolvente";
+        activateEG.innerText = "Envelope OFF";
     } else {
         EG.classList.add("disabled");
         activateEG.classList.remove("on");
-        activateEG.innerText = "Activar envolvente";
+        activateEG.innerText = "Envelope ON";
     }
 
     A.value = audioParams.ADSR.attack;
@@ -387,9 +442,9 @@ function setParams() {
     lfoRate.value = audioParams.lfo.rate;
     lfoAmt.value = audioParams.lfo.amount;
 
-    modFilter.checked = audioParams.lfo.mod[0] !== null ? true : false;
-    modOsc1.checked = audioParams.lfo.mod[1] !== null ? true : false;
-    modOsc2.checked = audioParams.lfo.mod[2] !== null ? true : false;
+    modFilter.checked = audioParams.lfo.mod[0] !== null;
+    modOsc1.checked = audioParams.lfo.mod[1] !== null;
+    modOsc2.checked = audioParams.lfo.mod[2] !== null;
 }
 
 //Show params - download user preset
@@ -416,3 +471,7 @@ savePresetBtn.addEventListener("click", function () {
 
 //Upload user preset
 uploadPresetFile.addEventListener("change", uploadPreset);
+
+
+//Randomize preset
+randomizePresetBtn.addEventListener("click", randomizeParams)

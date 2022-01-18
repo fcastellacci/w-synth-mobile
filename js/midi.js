@@ -394,8 +394,8 @@ activateEG.addEventListener("click", () => {
     EG.classList.toggle("disabled");
     activateEG.classList.toggle("on");
     activateEG.innerText = EG.classList.contains("disabled")
-        ? "Activar envolvente"
-        : "Desactivar envolvente";
+        ? "Envelope ON"
+        : "Envelope OFF";
 
     audioParams.ADSR.active = !audioParams.ADSR.active;
 
@@ -463,3 +463,18 @@ function release(releaseTime) {
         );
     });
 }
+
+//Trigger env
+const envTrigger = document.querySelector("#trigger-envelope");
+
+
+function playRandNote() {
+    return playNote(300);
+}
+
+function trigNoteOff() {
+    return noteOff(300);
+}
+envTrigger.addEventListener("mousedown", playRandNote)
+envTrigger.addEventListener("mouseup", trigNoteOff)
+
