@@ -357,13 +357,21 @@ function playNote(frequency) {
     }
 
     if (playedNotes.length === 1 && audioParams.ADSR.active === true) {
-        attackDecaySustain(
-            audioParams.ADSR.attack,
-            audioParams.ADSR.decay,
-            audioParams.ADSR.sustain
-        );
+       triggerEnv();
     }
 }
+
+function triggerEnv() {
+    attackDecaySustain(
+        audioParams.ADSR.attack,
+        audioParams.ADSR.decay,
+        audioParams.ADSR.sustain
+    );
+}
+
+function releaseEnv() {
+    release(audioParams.ADSR.release);
+} 
 
 function noteOff(frequency) {
     let position = playedNotes.indexOf(frequency);
@@ -373,7 +381,7 @@ function noteOff(frequency) {
     }
 
     if (playedNotes.length === 0) {
-        release(audioParams.ADSR.release);
+        releaseEnv();
     } else {
         synth.oscillators.forEach((oscillator) => {
             oscillator.frequency.value = playedNotes[playedNotes.length - 1];
@@ -467,14 +475,5 @@ function release(releaseTime) {
 //Trigger env
 const envTrigger = document.querySelector("#trigger-envelope");
 
-
-function playRandNote() {
-    return playNote(300);
-}
-
-function trigNoteOff() {
-    return noteOff(300);
-}
-envTrigger.addEventListener("mousedown", playRandNote)
-envTrigger.addEventListener("mouseup", trigNoteOff)
-
+envTrigger.addEventListener("mousedown", triggerEnv)
+envTrigger.addEventListener("mouseup", releaseEnv)
